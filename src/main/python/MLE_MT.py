@@ -59,7 +59,7 @@ def main():
         if (penalty_filename != ''):
             cmd += ' ' + penalty_filename
         print cmd
-        threads_list.append( threading.Thread(target=os.system, args=(cmd,)) )
+        threads_list.append( threading.Thread(target=log_command, args=(cmd,)) )
         threads_list[thread_idx].start()
 
     for thread in threads_list:
@@ -72,8 +72,8 @@ def main():
         rm_cmnd += output_filename + '.' + str(thread_idx)  + " " + input_filename + '.' + str(thread_idx) + " "
         
     cat_cmnd += ' > ' + output_filename
-    os.system(cat_cmnd)
-    os.system(rm_cmnd)
+    log_command(cat_cmnd)
+    log_command(rm_cmnd)
     
         
 

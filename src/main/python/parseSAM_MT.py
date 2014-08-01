@@ -3,6 +3,7 @@
 import sys
 import os
 import threading
+from binaidp import log_command
 
 def GetPathAndName(pathfilename):
     ls=pathfilename.split('/')
@@ -44,7 +45,7 @@ def main():
         cmd = (python_path + " " + bin_path + 'parseSAM.py ' + regions_filename + ' ' + reads_filename + '.' + str(thread_idx) + 
                ' ' + output_filename + '.' + str(thread_idx) + ' ' + read_len + ' ' + min_junction_overlap_len)
         print cmd
-        threads_list.append( threading.Thread(target=os.system, args=(cmd,)) )
+        threads_list.append( threading.Thread(target=log_command, args=(cmd,)) )
         threads_list[thread_idx].start()
 
     for thread in threads_list:
@@ -104,7 +105,7 @@ def main():
     for thread_idx in range(num_threads):
         output_files[thread_idx].close()
         rm_cmnd = "rm " + output_filename + '.' + str(thread_idx) + ' ' + reads_filename + '.' + str(thread_idx)
-        os.system(rm_cmnd)
+        log_command(rm_cmnd)
     output_file.close()
     
     

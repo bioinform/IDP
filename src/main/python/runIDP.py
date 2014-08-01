@@ -8,6 +8,7 @@ from re import *
 from copy import *
 import threading
 import string
+from binaidp import log_command
 import inspect # JW for debugging
 
 ################################################################################
@@ -58,10 +59,10 @@ def Readcfgfile(cfg_filename):
 # Post: 
 # Modifies:  Standard Out, Calls os.system()
 ###################################
-def print_run(cmd):
+def print_run(cmd, ignorefail=False):
     print cmd
     print ""
-    os.system(cmd)
+    log_command(cmd, ignorefail)
 
 ######### folder_absolute_right_slash ##########
 # Make sure the path for a folder has right slash and is an absolute path
@@ -119,6 +120,7 @@ else:
 # Initialize variables from configuration
 python_path = "/usr/bin/python"
 LR_gpd_pathfilename = ""
+LR_psl_pathfilename = ""
 SR_jun_pathfilename = ""
 SR_sam_pathfilename = ""
 CAGE_data_filename = ""
@@ -135,6 +137,15 @@ Nbin = "5"
 I_refjun_isoformconstruction =  "1"
 I_ref5end_isoformconstruction = "1"
 I_ref3end_isoformconstruction = "1"
+
+three_primer = ""
+five_primer = ""
+exon_construction_junction_span = "1"
+Niso = "50"
+Npt = "500"
+Nbin = "5"
+FPR = "0.05"
+
 
 L_min_intron = 68
 min_junction_overlap_len = 10
@@ -214,8 +225,8 @@ for key in cfg_dt:   # Assign variables from configuration file
 
 ################################################################################
 # Create folders in the paths supplied in the configuration file
-print_run('mkdir ' + temp_foldername)
-print_run('mkdir ' + output_foldername)
+print_run('mkdir -pv ' + temp_foldername)
+print_run('mkdir -pv ' + output_foldername)
 
 # Identify the folder containing the binaries
 bin_foldername, run_filename = GetPathAndName(run_pathfilename)
@@ -321,7 +332,9 @@ print_run("cp " + ref_gpd_pathfilename + " " + temp_foldername + "ref.gpd")
 
 ## detected_exp_len ##
 I_sam_exist = 0
-if detected_exp_len_pathfilename == "":
+try:
+    detected_exp_len_pathfilename
+except NameError:
     print "Warning: There is no " + detected_exp_len + "data." 
     print "Here, we calculate detection rate from long reads data and short read alignment" + SR_sam_pathfilename
 
@@ -332,7 +345,10 @@ if detected_exp_len_pathfilename == "":
     parseRef_cmd = python_bin_foldername + "parseRef.py " + "ref.gpd " + str(read_length) + " " + str(min_junction_overlap_len)
     print_run(parseRef_cmd)
 
-    print_run("cp " + SR_sam_pathfilename + " " + "SR.sam")
+    if SR_sam_pathfilename.endswith('.bam'):
+        print_run("samtools view -h -o SR.sam " + SR_sam_pathfilename)
+    else:
+        print_run("cp " + SR_sam_pathfilename + " SR.sam")
     I_sam_exist = 1
 
     parseSAM_cmd = python_bin_foldername + "parseSAM_MT.py " + "ref_regions.gpd " + "SR.sam " + str(Nthread) + " " + python_path + " " +  + str(read_length) + " " + str(min_junction_overlap_len) + " > parseSAM_MT0.log" 
@@ -417,6 +433,10 @@ if Istep == 1 or Istep == 0:
     for line in temp_LR_gpd:
         temp_LR_gpd_NR+=1
     temp_LR_gpd.close()
+    
+    if (temp_LR_gpd_NR == 0):
+        print "Nothing found in the junfil_compatible_LR_polyA3end.gpd file!";
+        sys.exit(1);
 
     Nsplitline = temp_LR_gpd_NR/Nthread
     print Nsplitline
@@ -473,7 +493,10 @@ if Istep == 2 or Istep == 0:
     print_run(parseRef_cmd)
 
     if I_sam_exist == 0:
-        print_run("cp " + SR_sam_pathfilename + " SR.sam")
+        if SR_sam_pathfilename.endswith('.bam'):
+            print_run("samtools view -h -o SR.sam " + SR_sam_pathfilename)
+        else:
+            print_run("cp " + SR_sam_pathfilename + " SR.sam")
 
     parseSAM_cmd = python_bin_foldername + "parseSAM_MT.py " + "isoform_construction_regions." + "Niso" + Niso  + ".gpd " + "SR.sam " + str(Nthread) + " " + python_path + " " + str(read_length) + " " + str(min_junction_overlap_len) + " > parseSAM_MT.log"
     print_run(parseSAM_cmd)

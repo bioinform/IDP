@@ -4,6 +4,7 @@ import struct
 import os
 import threading
 import string
+from binaidp import log_command
 
 ################################################################################
 
@@ -57,7 +58,7 @@ while i <Nthread1:
 print "===split SR:==="    
 splitSR_cmd = "split -l " + str(Nsplitline) + " " + SR_pathfilename + " " + output_path +SR_filename +"."
 print splitSR_cmd
-os.system(splitSR_cmd)
+log_command(splitSR_cmd)
 
 ##########################################
 print "===compress SR.aa:==="    
@@ -67,7 +68,7 @@ T_blat_SR_ls = []
 for ext in ext_ls:
     blat_SR_cmd = bin_path1 + "blat " + blat_option + ' ' + output_path + SR_filename + ext + ' ' + output_path + SR_filename + ext + ".psl"
     print blat_SR_cmd
-    T_blat_SR_ls.append( threading.Thread(target=os.system, args=(blat_SR_cmd,)) )
+    T_blat_SR_ls.append( threading.Thread(target=log_command, args=(blat_SR_cmd,)) )
     T_blat_SR_ls[i].start()
     i+=1
 
@@ -79,7 +80,7 @@ T_bestblat_SR_ls = []
 for ext in ext_ls:
     bestblat_SR_cmd = python_path + ' ' + bin_path2 + "blat_best.py " + output_path + SR_filename + ext + '.psl 5 > ' + output_path + SR_filename + ext + ".bestpsl"
     print bestblat_SR_cmd
-    T_bestblat_SR_ls.append( threading.Thread(target=os.system, args=(bestblat_SR_cmd,)) )
+    T_bestblat_SR_ls.append( threading.Thread(target=log_command, args=(bestblat_SR_cmd,)) )
     T_bestblat_SR_ls[i].start()
     i+=1
 
@@ -97,6 +98,6 @@ cat_bestpsl_cmd = cat_bestpsl_cmd + " > " + output_pathfilename
 print cat_bestpsl_cmd
 print rm_SR_cmd
 print rm_SRpsl_cmd
-os.system(cat_bestpsl_cmd)
-os.system(rm_SR_cmd)
-os.system(rm_SRpsl_cmd)
+log_command(cat_bestpsl_cmd)
+log_command(rm_SR_cmd)
+log_command(rm_SRpsl_cmd)
