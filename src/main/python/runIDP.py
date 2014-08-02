@@ -146,7 +146,7 @@ Npt = "500"
 Nbin = "5"
 FPR = "0.05"
 
-
+read_length = 100
 L_min_intron = 68
 min_junction_overlap_len = 10
 psl_type = "0"
