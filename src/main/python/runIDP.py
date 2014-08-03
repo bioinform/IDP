@@ -131,7 +131,7 @@ L_exon_limit = "4000"
 Ijunction_cover = "1"
 temp_foldername = ""
 output_foldername = ""
-detected_exp_len_filename = ""
+detected_exp_len_pathfilename = ""
 Bfile_Npt = "500"
 Nbin = "5"
 I_refjun_isoformconstruction =  "1"
@@ -335,7 +335,7 @@ I_sam_exist = 0
 try:
     detected_exp_len_pathfilename
 except NameError:
-    print "Warning: There is no " + detected_exp_len_filename + "data." 
+    print "Warning: There is no " + detected_exp_len_pathfilename + "data." 
     print "Here, we calculate detection rate from long reads data and short read alignment" + SR_sam_pathfilename
 
     os.chdir(temp_foldername)
