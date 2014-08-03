@@ -131,7 +131,7 @@ L_exon_limit = "4000"
 Ijunction_cover = "1"
 temp_foldername = ""
 output_foldername = ""
-detected_exp_len = ""
+detected_exp_len_filename = ""
 Bfile_Npt = "500"
 Nbin = "5"
 I_refjun_isoformconstruction =  "1"
@@ -335,7 +335,7 @@ I_sam_exist = 0
 try:
     detected_exp_len_pathfilename
 except NameError:
-    print "Warning: There is no " + detected_exp_len + "data." 
+    print "Warning: There is no " + detected_exp_len_filename + "data." 
     print "Here, we calculate detection rate from long reads data and short read alignment" + SR_sam_pathfilename
 
     os.chdir(temp_foldername)
@@ -351,7 +351,7 @@ except NameError:
         print_run("cp " + SR_sam_pathfilename + " SR.sam")
     I_sam_exist = 1
 
-    parseSAM_cmd = python_bin_foldername + "parseSAM_MT.py " + "ref_regions.gpd " + "SR.sam " + str(Nthread) + " " + python_path + " " +  + str(read_length) + " " + str(min_junction_overlap_len) + " > parseSAM_MT0.log" 
+    parseSAM_cmd = python_bin_foldername + "parseSAM_MT.py " + "ref_regions.gpd " + "SR.sam " + str(Nthread) + " " + python_path + " "   + str(read_length) + " " + str(min_junction_overlap_len) + " > parseSAM_MT0.log" 
     print_run(parseSAM_cmd)
     print_run("awk \'{print $3\"\\t\"$2}\' " + "ref.gpd > " + "positive_candidate_list0")
 
