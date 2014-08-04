@@ -332,9 +332,8 @@ print_run("cp " + ref_gpd_pathfilename + " " + temp_foldername + "ref.gpd")
 
 ## detected_exp_len ##
 I_sam_exist = 0
-try:
-    detected_exp_len_pathfilename
-except NameError:
+
+if  (detected_exp_len_pathfilename == ""):
     print "Warning: There is no " + detected_exp_len_pathfilename + "data." 
     print "Here, we calculate detection rate from long reads data and short read alignment" + SR_sam_pathfilename
 
