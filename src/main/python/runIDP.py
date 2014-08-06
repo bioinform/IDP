@@ -334,7 +334,7 @@ print_run("cp " + ref_gpd_pathfilename + " " + temp_foldername + "ref.gpd")
 I_sam_exist = 0
 
 if  (detected_exp_len_pathfilename == ""):
-    print "Warning: There is no " + detected_exp_len_pathfilename + "data." 
+    print "Note: There is no " + detected_exp_len_pathfilename + "data." 
     print "Here, we calculate detection rate from long reads data and short read alignment" + SR_sam_pathfilename
 
     os.chdir(temp_foldername)
