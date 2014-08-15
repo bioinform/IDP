@@ -51,9 +51,6 @@ for locus in candidate_dt:
     for item in candidate_dt[locus]:
         temp = [locus]
         temp.append(chr_name)
-        if gpd_strand == '':
-            gpd_strand = "+"
-        temp.append(gpd_strand)
 
         ls  = item.strip("_").split('_')
         L_ls = len(ls)/2
@@ -68,8 +65,10 @@ for locus in candidate_dt:
 
 
         for gpd_strand in candidate_dt[locus][item]:
-
-
+            if gpd_strand == '':
+                temp.append("+")
+            else:
+                temp.append(gpd_strand)               
             for twoending_str in candidate_dt[locus][item][gpd_strand]:
                 first_temp =deepcopy(temp)
                 first_temp.insert(1,  locus + '.' +str(i) )
