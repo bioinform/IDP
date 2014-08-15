@@ -119,6 +119,9 @@ else:
 ################################################################################
 # Initialize variables from configuration
 python_path = "/usr/bin/python"
+blat_executable_pathfilename = "./blat"
+gmap_executable_pathfilename = "./gmap"
+seqmap_executable_pathfilename = "./seqmap"
 LR_gpd_pathfilename = ""
 LR_psl_pathfilename = ""
 SR_jun_pathfilename = ""
@@ -126,6 +129,7 @@ SR_sam_pathfilename = ""
 CAGE_data_filename = ""
 ref_annotation_pathfilename = ""
 allref_annotation_pathfilename = ""
+gmap_index_pathfoldername = ""
 Njun_limit = "20"
 L_exon_limit = "4000"
 Ijunction_cover = "1"
@@ -150,6 +154,8 @@ read_length = 100
 L_min_intron = 68
 min_junction_overlap_len = 10
 psl_type = "0"
+aligner_choice = "blat"
+estimator_choice = "MAP"
 ################################################################################
 cfg_dt = Readcfgfile(cfg_filename)
 for key in cfg_dt:   # Assign variables from configuration file
@@ -167,6 +173,8 @@ for key in cfg_dt:   # Assign variables from configuration file
         ref_gpd_pathfilename = os.path.abspath(cfg_dt[key])
     elif key == "allref_annotation_pathfilename":
         allref_gpd_pathfilename = os.path.abspath(cfg_dt[key])
+    elif key == "gmap_index_pathfoldername":
+        gmap_index_pathfoldername = os.path.abspath(cfg_dt[key])
     elif key == "min_junction_overlap_len":
         min_junction_overlap_len = int(cfg_dt[key])
     elif key == "read_length":
@@ -280,20 +288,24 @@ elif LR_pathfilename != "" and genome_pathfilename != "":
         print_run( "echo \">three_primer\" > " + temp_foldername + "three.fa" )
         print_run( "echo \"" + three_primer + "\" >> " + temp_foldername + "three.fa" )
 
-        seqmap_three_cmd = bin_foldername + "seqmap 2 " + temp_foldername + "three.fa "  + temp_foldername + "LR.cps " + temp_foldername + "LR.cps.3.out /allow_insdel:1  /output_alignment /output_all_matches"
+        seqmap_three_cmd = seqmap_path + " 2 " + temp_foldername + "three.fa "  + temp_foldername + "LR.cps " + temp_foldername + "LR.cps.3.out /allow_insdel:1  /output_alignment /output_all_matches"
         print_run(seqmap_three_cmd)
 
         print_run( "echo \">five_primer\" > " + temp_foldername + "five.fa" )
         print_run( "echo \"" + five_primer + "\" >> " + temp_foldername + "five.fa" )
 	
-        seqmap_five_cmd = bin_foldername + "seqmap 2 " + temp_foldername + "five.fa "  + temp_foldername + "LR.cps " + temp_foldername + "LR.cps.5.out /allow_insdel:1  /output_alignment /output_all_matches"
+        seqmap_five_cmd = seqmap_path + " 2 " + temp_foldername + "five.fa "  + temp_foldername + "LR.cps " + temp_foldername + "LR.cps.5.out /allow_insdel:1  /output_alignment /output_all_matches"
         print_run(seqmap_five_cmd)
 
         removeAdapterPolyA_cmd = python_bin_foldername + "removeAdapterPolyA.py " + temp_foldername + "LR.cps " + temp_foldername + "LR.idx " + temp_foldername + "LR.cps.3.out " + temp_foldername + "LR.cps.5.out " + temp_foldername + "LR_notailspolyA.fa"
         print_run(removeAdapterPolyA_cmd)
 
-        blat_cmd = python_bin_foldername + "blat_threading.py " + python_path + " " + str(Nthread) + " -t=DNA -q=DNA " + genome_pathfilename + " " + temp_foldername + "LR_notailspolyA.fa " + temp_foldername + "LR_notailspolyA.fa.bestpsl" #JWDEBUG added a python path argument to fix blat_threading.py's call to best_blat.py
-        print_run(blat_cmd)
+        if aligner_choice == "gmap":
+          gmap_cmd = python_bin_foldername + "gmap_threading.py " + python_path + " " + gmap_path + " -f 1 -t " + str(Nthread) + " " + temp_foldername + "LR_notailspolyA.fa " + " " + gmap_index_pathfoldername + " " + temp_foldername + "LR_notailspolyA.fa.bestpsl"
+          print_run(gmap_cmd)
+        else:
+          blat_cmd = python_bin_foldername + "blat_threading.py " + python_path + " " + blat_path + " " + str(Nthread) + " -t=DNA -q=DNA " + genome_pathfilename + " " + temp_foldername + "LR_notailspolyA.fa " + temp_foldername + "LR_notailspolyA.fa.bestpsl" #JWDEBUG added a python path argument to fix blat_threading.py's call to best_blat.py
+          print_run(blat_cmd)
 		
         change_psl_cmd = python_bin_foldername + "change_psl_polyA3end_4digit.py " + temp_foldername + "LR_notailspolyA.fa.bestpsl " + temp_foldername + "LR_notailspolyA.fa.3 > " + temp_foldername + "newname4_LR.bestpsl"
         print_run(change_psl_cmd)
@@ -302,8 +314,12 @@ elif LR_pathfilename != "" and genome_pathfilename != "":
         print_run(psl2genephed_cmd)
 	
     else:
-        blat_cmd = python_bin_foldername + "blat_threading.py " + python_path + " " + str(Nthread) + " -t=DNA -q=DNA " + genome_pathfilename + " " + LR_pathfilename + " " + temp_foldername + "LR.fa.psl" #JWDEBUG also did it to this line
-        print_run(blat_cmd)
+        if aligner_choice == "gmap":
+          gmap_cmd = python_bin_foldername + "gmap_threading.py " + python_path + " " + gmap_path + " -f 1 -t " + str(Nthread) + " " + LR_pathfilename + " " + gmap_index_pathfoldername + " " + temp_foldername + "LR.fa.psl"
+          print_run(gmap_cmd)
+        else:
+          blat_cmd = python_bin_foldername + "blat_threading.py " + python_path + " " + blat_path + " " + str(Nthread) + " -t=DNA -q=DNA " + genome_pathfilename + " " + LR_pathfilename + " " + temp_foldername + "LR.fa.psl" #JWDEBUG also did it to this line
+          print_run(blat_cmd)
 		
         change_psl_cmd = python_bin_foldername + "change_psl_4digit.py " + temp_foldername + "LR.fa.psl > " + temp_foldername + "newname4_LR.bestpsl"
         print_run(change_psl_cmd)
@@ -332,9 +348,8 @@ print_run("cp " + ref_gpd_pathfilename + " " + temp_foldername + "ref.gpd")
 
 ## detected_exp_len ##
 I_sam_exist = 0
-
-if  (detected_exp_len_pathfilename == ""):
-    print "Note: There is no " + detected_exp_len_pathfilename + "data." 
+if detected_exp_len_pathfilename == "" and estimator_choice != 'MLE':  # if estimator is MLE we definately skip this part.
+    print "Warning: There is no " + detected_exp_len_pathfilename + "data." 
     print "Here, we calculate detection rate from long reads data and short read alignment" + SR_sam_pathfilename
 
     os.chdir(temp_foldername)
@@ -381,9 +396,8 @@ if  (detected_exp_len_pathfilename == ""):
     exp_len_I_cmd = python_bin_foldername + "exp_len.py " + temp_foldername + "refSeq_MLE_output0.tab " + temp_foldername + "known_LR.gpd_ref.gpd > " + temp_foldername + "known_LR.gpd_ref.gpd_exp_len"
     print_run(exp_len_I_cmd)
 
-else:
+elif estimator_choice != 'MLE': # we won't need this file if we are using MLE as estimator choice
     print_run("cp " + detected_exp_len_pathfilename + " " + temp_foldername + "known_LR.gpd_ref.gpd_exp_len")
-
 #############################################################################################################################################################
 
 if Istep == 1 or Istep == 0:
@@ -455,7 +469,7 @@ if Istep == 1 or Istep == 0:
     for ext in ext_ls:
         isoform_construction_cmd = python_bin_foldername + "isoform_construction_polyA3end_5cap.py " + temp_foldername + "ref.gpd" + " " + jun_isoformconstruction + " " + temp_foldername + "SR.bed" + "_ref.gpd.exon " + processed_CAGE_filename + " " + temp_foldername + "junfil_compatible_LR_polyA3end.gpd" + ext + " " + I_ref5end_isoformconstruction + " " + I_ref3end_isoformconstruction + " " + Njun_limit + " " + L_exon_limit + " " + temp_foldername + "junfil_compatible_LR_polyA3end.gpd.out" + ext + " > " + temp_foldername + "isoform_construction" + ext + ".log"
         print isoform_construction_cmd
-        T_isoform_construction_ls.append( threading.Thread(target=os.system, args=(isoform_construction_cmd,)) )
+        T_isoform_construction_ls.append( threading.Thread(target=log_command, args=(isoform_construction_cmd,)) )
         T_isoform_construction_ls[i].start()
         i+=1
     for T in T_isoform_construction_ls:
@@ -510,13 +524,20 @@ if Istep == 2 or Istep == 0:
     markknownTranscripts_cmd = python_bin_foldername + "markKnownTranscripts.py " + "refSeq_MLE_input.txt " + "positive_candidate_list " + "refSeq_MLE_input_marked.txt" 
     print_run(markknownTranscripts_cmd)
 
-    exp_len_I_cmd = python_bin_foldername + "exp_len_on_refbigtable.py " + "known_LR.gpd_ref.gpd_exp_len" + " " + "known_LR.gpd_ref.gpd  > " + "known_LR.gpd_ref.gpd_exp_len_I"
-    print_run(exp_len_I_cmd)
+    #decide if we want to use MLE or MAP
+    if estimator_choice == 'MLE':
+      #our choice if there are very few isoforms
+      MLE_cmd = python_bin_foldername + "MLE_MT.py " + "refSeq_MLE_input_marked.txt " + "refSeq_MLE_output.txt " + str(Nthread) + " " + python_path
+    else: 
+      #our choice by default will be MAP if there are plenty of isoforms to derive a penelty for length verses expression
+      exp_len_I_cmd = python_bin_foldername + "exp_len_on_refbigtable.py " + "known_LR.gpd_ref.gpd_exp_len" + " " + "known_LR.gpd_ref.gpd  > " + "known_LR.gpd_ref.gpd_exp_len_I"
+      print_run(exp_len_I_cmd)
 
-    Bfile_cmd = python_bin_foldername + "Bfile.py " + "known_LR.gpd_ref.gpd_exp_len_I " + "isoform_construction." + "Niso" + Niso + ".gpd " + Npt + " " + Nbin + " > " + "Bfile"
-    print_run(Bfile_cmd)
+      Bfile_cmd = python_bin_foldername + "Bfile.py " + "known_LR.gpd_ref.gpd_exp_len_I " + "isoform_construction." + "Niso" + Niso + ".gpd " + Npt + " " + Nbin + " > " + "Bfile"
+      print_run(Bfile_cmd)
 
-    MLE_cmd = python_bin_foldername + "MLE_MT.py " + "refSeq_MLE_input_marked.txt " + "refSeq_MLE_output.txt " + str(Nthread) + " " + python_path + " Bfile "
+      #our choice if there are enough detected annotated isoforms for
+      MLE_cmd = python_bin_foldername + "MLE_MT.py " + "refSeq_MLE_input_marked.txt " + "refSeq_MLE_output.txt " + str(Nthread) + " " + python_path + " Bfile "
 
     print_run(MLE_cmd)
     reformat_cmd = python_bin_foldername + "reformat.py " + "refSeq_MLE_output.txt > " + "refSeq_MLE_output.txt_"

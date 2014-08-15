@@ -8,11 +8,12 @@ from binaidp import log_command
 
 ################################################################################
 
-if len(sys.argv) >= 8: #JWDEBUG modified to handle the extra python argument
+if len(sys.argv) >= 9: #JWDEBUG modified to handle the extra python argument
     blat_threading_pathfilename =  sys.argv[0]
     python_path = sys.argv[1] #JWDEBUG adding this extra agrument to call python
-    Nthread1 = int(sys.argv[2])
-    blat_option = ' '.join(sys.argv[3:-2])
+    blat_path = sys.argv[2]
+    Nthread1 = int(sys.argv[3])
+    blat_option = ' '.join(sys.argv[4:-2])
     SR_pathfilename = sys.argv[-2]
     output_pathfilename = sys.argv[-1]
     
@@ -66,7 +67,7 @@ print "===compress SR.aa:==="
 i=0
 T_blat_SR_ls = []
 for ext in ext_ls:
-    blat_SR_cmd = bin_path1 + "blat " + blat_option + ' ' + output_path + SR_filename + ext + ' ' + output_path + SR_filename + ext + ".psl"
+    blat_SR_cmd = blat_path + " " + blat_option + ' ' + output_path + SR_filename + ext + ' ' + output_path + SR_filename + ext + ".psl"
     print blat_SR_cmd
     T_blat_SR_ls.append( threading.Thread(target=log_command, args=(blat_SR_cmd,)) )
     T_blat_SR_ls[i].start()
@@ -78,7 +79,7 @@ for T in T_blat_SR_ls:
 i=0
 T_bestblat_SR_ls = []
 for ext in ext_ls:
-    bestblat_SR_cmd = python_path + ' ' + bin_path2 + "blat_best.py " + output_path + SR_filename + ext + '.psl 5 > ' + output_path + SR_filename + ext + ".bestpsl"
+    bestblat_SR_cmd = python_path + ' ' + bin_path2 + "blat_best.py " + output_path + SR_filename + ext + '.psl 0 > ' + output_path + SR_filename + ext + ".bestpsl"
     print bestblat_SR_cmd
     T_bestblat_SR_ls.append( threading.Thread(target=log_command, args=(bestblat_SR_cmd,)) )
     T_bestblat_SR_ls[i].start()
