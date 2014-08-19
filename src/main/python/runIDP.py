@@ -168,6 +168,14 @@ for key in cfg_dt:   # Assign variables from configuration file
         Nthread = int(cfg_dt[key])
     elif key == "python_path":
         python_path = cfg_dt[key]
+    elif key == "aligner_choice":
+        aligner_choice = cfg_dt[key]
+    elif key == "gmap_executable_pathfilename":
+        gmap_path = cfg_dt[key]
+    elif key == "blat_executable_pathfilename":
+        blat_path = cfg_dt[key]
+    elif key == "seqmap_executable_pathfilename":
+        seqmap_path = cfg_dt[key]
     elif key == "LR_gpd_pathfilename":
         LR_gpd_pathfilename = cfg_dt[key]
     elif key == "SR_jun_pathfilename":
