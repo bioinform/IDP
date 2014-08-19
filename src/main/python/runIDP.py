@@ -119,9 +119,14 @@ else:
 ################################################################################
 # Initialize variables from configuration
 python_path = "/usr/bin/python"
-blat_executable_pathfilename = "./blat"
-gmap_executable_pathfilename = "./gmap"
-seqmap_executable_pathfilename = "./seqmap"
+blat_executable_pathfilename = "blat"
+gmap_executable_pathfilename = "gmap"
+seqmap_executable_pathfilename = "seqmap"
+
+blat_path = blat_executable_pathfilename
+seqmap_path = seqmap_executable_pathfilename
+gmap_path = gmap_executable_pathfilename
+
 LR_gpd_pathfilename = ""
 LR_psl_pathfilename = ""
 SR_jun_pathfilename = ""
@@ -304,7 +309,7 @@ elif LR_pathfilename != "" and genome_pathfilename != "":
           gmap_cmd = python_bin_foldername + "gmap_threading.py " + python_path + " " + gmap_path + " -f 1 -t " + str(Nthread) + " " + temp_foldername + "LR_notailspolyA.fa " + " " + gmap_index_pathfoldername + " " + temp_foldername + "LR_notailspolyA.fa.bestpsl"
           print_run(gmap_cmd)
         else:
-          blat_cmd = python_bin_foldername + "blat_threading.py " + python_path + " " + blat_path + " " + str(Nthread) + " -t=DNA -q=DNA " + genome_pathfilename + " " + temp_foldername + "LR_notailspolyA.fa " + temp_foldername + "LR_notailspolyA.fa.bestpsl" #JWDEBUG added a python path argument to fix blat_threading.py's call to best_blat.py
+          blat_cmd = python_bin_foldername + "blat_threading.py " + python_path + " " + blat_path + " " + str(Nthread) + " -t=DNA -q=DNA -noHead " + genome_pathfilename + " " + temp_foldername + "LR_notailspolyA.fa " + temp_foldername + "LR_notailspolyA.fa.bestpsl" #JWDEBUG added a python path argument to fix blat_threading.py's call to best_blat.py
           print_run(blat_cmd)
 		
         change_psl_cmd = python_bin_foldername + "change_psl_polyA3end_4digit.py " + temp_foldername + "LR_notailspolyA.fa.bestpsl " + temp_foldername + "LR_notailspolyA.fa.3 > " + temp_foldername + "newname4_LR.bestpsl"
@@ -318,7 +323,7 @@ elif LR_pathfilename != "" and genome_pathfilename != "":
           gmap_cmd = python_bin_foldername + "gmap_threading.py " + python_path + " " + gmap_path + " -f 1 -t " + str(Nthread) + " " + LR_pathfilename + " " + gmap_index_pathfoldername + " " + temp_foldername + "LR.fa.psl"
           print_run(gmap_cmd)
         else:
-          blat_cmd = python_bin_foldername + "blat_threading.py " + python_path + " " + blat_path + " " + str(Nthread) + " -t=DNA -q=DNA " + genome_pathfilename + " " + LR_pathfilename + " " + temp_foldername + "LR.fa.psl" #JWDEBUG also did it to this line
+          blat_cmd = python_bin_foldername + "blat_threading.py " + python_path + " " + blat_path + " " + str(Nthread) + " -t=DNA -q=DNA -noHead " + genome_pathfilename + " " + LR_pathfilename + " " + temp_foldername + "LR.fa.psl" #JWDEBUG also did it to this line
           print_run(blat_cmd)
 		
         change_psl_cmd = python_bin_foldername + "change_psl_4digit.py " + temp_foldername + "LR.fa.psl > " + temp_foldername + "newname4_LR.bestpsl"
