@@ -24,8 +24,10 @@ for line in neg_file:
     ID = ls[0]
     iso_exp = float(ls[1])
     gene_exp = float(ls[2])
-    neg_perc_ls.append(iso_exp/gene_exp)
-    
+    if (gene_exp > 0):
+        neg_perc_ls.append(iso_exp/gene_exp)
+    else:
+        neg_perc_ls.append(0)
 neg_file.close()
 
 neg_perc_ls.sort()
