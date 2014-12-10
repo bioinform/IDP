@@ -3,7 +3,7 @@ import sys
 import struct
 import os
 import string
-from binaidp import log_command
+from idpcommon import log_command
 
 ################################################################################
 

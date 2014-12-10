@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# Filename: binaidp.py
 
 import os;
 
@@ -14,5 +13,3 @@ def log_command(command, ignorefail=False):
 
 def log_print(print_str):
     os.system("echo " + str(print_str))
-
-# End of binaidp.py
