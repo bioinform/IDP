@@ -147,6 +147,10 @@ I_refjun_isoformconstruction =  "1"
 I_ref5end_isoformconstruction = "1"
 I_ref3end_isoformconstruction = "1"
 
+FPR = 1
+min_isoform_fraction = 0
+min_isoform_rpkm = 0
+
 three_primer = ""
 five_primer = ""
 exon_construction_junction_span = "1"
@@ -242,7 +246,14 @@ for key in cfg_dt:   # Assign variables from configuration file
         five_primer = cfg_dt[key]
 
     elif key == "FPR":
-        FPR = cfg_dt[key]
+      if match('[\d]',cfg_dt[key]):
+        FPR = float(cfg_dt[key])
+    elif key == "min_isoform_fraction":
+      if match('[\d]',cfg_dt[key]):
+        min_isoform_fraction = float(cfg_dt[key])
+    elif key == "min_isoform_rpkm":
+      if match('[\d]',cfg_dt[key]):
+        min_isoform_rpkm = float(cfg_dt[key])
 
 ################################################################################
 # Create folders in the paths supplied in the configuration file
@@ -579,8 +590,21 @@ if Istep == 2 or Istep == 0:
     addexp2bed_cmd = python_bin_foldername + "addexp2bed.py " + "refSeq_MLE_output.txt_ " + "isoform_construction.gpd isoform_construction_expcol.bed B > noexp_gene_transcript_list"
     print_run(addexp2bed_cmd)
 
-    select_ROC_cmd = python_bin_foldername + "select_FPR.py positive_refSeq_MLE_output.tab negative_refSeq_MLE_output.tab " + str(FPR) + " refSeq_MLE_output.tab refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".tab"
-    print_run(select_ROC_cmd)
+
+    # Use the ratios of isoform to gene locus expression from the negative 
+    #     data to filter data according to the user defined FPR.
+    FPR_option_string = ""
+    min_isoform_fraction_string = ""
+    min_isoform_rpkm_string = ""
+    if FPR > 0 and FPR < 1:
+      FPR_option_string = " --FPR "+str(FPR)+" "
+    elif min_isoform_fraction > 0:
+      min_isoform_fraction_string = " --min_isoform_fraction "+str(min_isoform_fraction)+" "
+    if min_isoform_rpkm > 0:
+      min_isoform_rpkm_string = " --min_isoform_rpkm "+str(min_isoform_rpkm)+" "
+    filter_MLE_cmd = python_bin_foldername + "filter_MLE_table.py" + FPR_option_string + min_isoform_fraction_string+min_isoform_rpkm_string+"negative_refSeq_MLE_output.tab refSeq_MLE_output.tab refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".tab"
+    print_run(filter_MLE_cmd)
+
     print_run("cut -f 1 refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".tab > refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".ID")
     print_run(python_bin_foldername + "selectrow.py " + "isoform_construction." + "Niso" + Niso + ".gpd" +  " 2 " + "refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".ID " + "refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".gpd > " + "isoform_construction." + "Niso" + Niso + ".gpd_selectcount")
 
