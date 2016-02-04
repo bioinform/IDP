@@ -3,7 +3,7 @@
 import sys
 import os
 import threading
-from binaidp import log_command
+from idpcommon import log_command
 
 def GetPathAndName(pathfilename):
     ls=pathfilename.split('/')
