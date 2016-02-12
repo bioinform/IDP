@@ -51,7 +51,6 @@ log_command(gmap_SR_cmd)
 bestblat_SR_cmd = python_path + ' ' + bin_path2 + "blat_best.py " + output_path + SR_filename + '.psl 0 > ' + output_pathfilename
 log_command(bestblat_SR_cmd)
 
-rm_SRpsl_cmd = "rm " + output_path + SR_filename + '.psl '
-
-print rm_SRpsl_cmd
-log_command(rm_SRpsl_cmd)
+#rm_SRpsl_cmd = "rm " + output_path + SR_filename + '.psl '
+#print rm_SRpsl_cmd
+#log_command(rm_SRpsl_cmd)

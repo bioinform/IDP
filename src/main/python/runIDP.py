@@ -45,7 +45,7 @@ def Readcfgfile(cfg_filename):
         if not line[0]=='#':
             ls = line.split('=')
             if len(ls)>2:
-                print 'warning: too many = in cfg file'
+                print("warning: too many = in cfg file")
             results[ls[0].strip()] = ls[1].strip()
             print [ls[0].strip(), ls[1].strip()]
 
@@ -147,8 +147,10 @@ I_refjun_isoformconstruction =  "1"
 I_ref5end_isoformconstruction = "1"
 I_ref3end_isoformconstruction = "1"
 
+detect_polyA = 0
 three_primer = ""
 five_primer = ""
+polyA_min_len = "10"
 exon_construction_junction_span = "1"
 Niso = "50"
 Npt = "500"
@@ -235,14 +237,20 @@ for key in cfg_dt:   # Assign variables from configuration file
         LR_psl_pathfilename = cfg_dt[key]
     elif key == "psl_type":
         psl_type = cfg_dt[key]
-
+    
+    elif key == "detect_polyA":
+        detect_polyA = int(cfg_dt[key])
     elif key == "three_primer":
         three_primer = cfg_dt[key]
     elif key == "five_primer":
         five_primer = cfg_dt[key]
+    elif key == "polyA_min_length":
+        polyA_min_len = cfg_dt[key]
 
     elif key == "FPR":
         FPR = cfg_dt[key]
+    elif key == "estimator_choice":
+        estimator_choice = cfg_dt[key]
 
 ################################################################################
 # Create folders in the paths supplied in the configuration file
@@ -278,7 +286,7 @@ elif LR_psl_pathfilename != "":
     I_LR_step = 1
 
     if psl_type == "0":
-        blat_best_cmd = python_bin_foldername + "blat_best.py " + LR_psl_pathfilename + " 5 > " + temp_foldername + "LR.bestpsl"
+        blat_best_cmd = python_bin_foldername + "blat_best.py " + LR_psl_pathfilename + " 0 > " + temp_foldername + "LR.bestpsl"
         print_run(blat_best_cmd)
     else:
         blat_best_cmd = "cp " + LR_psl_pathfilename + " " + temp_foldername + "LR.bestpsl"
@@ -294,25 +302,35 @@ elif LR_pathfilename != "" and genome_pathfilename != "":
     print "use raw sequence of the long reads (FASTA format), " + LR_pathfilename + " as long read input; and the reference genome is " + genome_pathfilename
     #This sectino will make a large number of files in the temp folder (~156)
     I_LR_step = 2
+
+    # For backward compatibility 
     if three_primer != "" and five_primer != "":
+        detect_polyA = 1
+    if detect_polyA:
         compress_cmd = python_bin_foldername + "compressFASTA.py " + LR_pathfilename +  " " + temp_foldername + "LR."
         print_run(compress_cmd)
+        
+        # Detect polyA based on given primers
+        if three_primer != "" and five_primer != "":
+            print_run( "echo \">three_primer\" > " + temp_foldername + "three.fa" )
+            print_run( "echo \"" + three_primer + "\" >> " + temp_foldername + "three.fa" )
 
-        print_run( "echo \">three_primer\" > " + temp_foldername + "three.fa" )
-        print_run( "echo \"" + three_primer + "\" >> " + temp_foldername + "three.fa" )
+            seqmap_three_cmd = seqmap_path + " 2 " + temp_foldername + "three.fa "  + temp_foldername + "LR.cps " + temp_foldername + "LR.cps.3.out /allow_insdel:1  /output_alignment /output_all_matches"
+            print_run(seqmap_three_cmd)
 
-        seqmap_three_cmd = seqmap_path + " 2 " + temp_foldername + "three.fa "  + temp_foldername + "LR.cps " + temp_foldername + "LR.cps.3.out /allow_insdel:1  /output_alignment /output_all_matches"
-        print_run(seqmap_three_cmd)
-
-        print_run( "echo \">five_primer\" > " + temp_foldername + "five.fa" )
-        print_run( "echo \"" + five_primer + "\" >> " + temp_foldername + "five.fa" )
+            print_run( "echo \">five_primer\" > " + temp_foldername + "five.fa" )
+            print_run( "echo \"" + five_primer + "\" >> " + temp_foldername + "five.fa" )
 	
-        seqmap_five_cmd = seqmap_path + " 2 " + temp_foldername + "five.fa "  + temp_foldername + "LR.cps " + temp_foldername + "LR.cps.5.out /allow_insdel:1  /output_alignment /output_all_matches"
-        print_run(seqmap_five_cmd)
+            seqmap_five_cmd = seqmap_path + " 2 " + temp_foldername + "five.fa "  + temp_foldername + "LR.cps " + temp_foldername + "LR.cps.5.out /allow_insdel:1  /output_alignment /output_all_matches"
+            print_run(seqmap_five_cmd)
 
-        removeAdapterPolyA_cmd = python_bin_foldername + "removeAdapterPolyA.py " + temp_foldername + "LR.cps " + temp_foldername + "LR.idx " + temp_foldername + "LR.cps.3.out " + temp_foldername + "LR.cps.5.out " + temp_foldername + "LR_notailspolyA.fa"
-        print_run(removeAdapterPolyA_cmd)
+            removeAdapterPolyA_cmd = python_bin_foldername + "removeAdapterPolyA.py " + temp_foldername + "LR.cps " + temp_foldername + "LR.idx " + temp_foldername + "LR.cps.3.out " + temp_foldername + "LR.cps.5.out " + polyA_min_len + " " + temp_foldername + "LR_notailspolyA.fa"
+            print_run(removeAdapterPolyA_cmd)
 
+        else:
+           removeAdapterPolyA_cmd = python_bin_foldername + "removeAdapterPolyA_noprimer.py " + temp_foldername + "LR.cps " + temp_foldername + "LR.idx " + polyA_min_len + " " + temp_foldername + "LR_notailspolyA.fa"
+           print_run(removeAdapterPolyA_cmd)
+            
         if aligner_choice == "gmap":
           gmap_cmd = python_bin_foldername + "gmap_threading.py " + python_path + " " + gmap_path + " -f 1 -t " + str(Nthread) + " " + temp_foldername + "LR_notailspolyA.fa " + " " + gmap_index_pathfoldername + " " + temp_foldername + "LR_notailspolyA.fa.bestpsl"
           print_run(gmap_cmd)
@@ -328,13 +346,13 @@ elif LR_pathfilename != "" and genome_pathfilename != "":
 	
     else:
         if aligner_choice == "gmap":
-          gmap_cmd = python_bin_foldername + "gmap_threading.py " + python_path + " " + gmap_path + " -f 1 -t " + str(Nthread) + " " + LR_pathfilename + " " + gmap_index_pathfoldername + " " + temp_foldername + "LR.fa.psl"
+          gmap_cmd = python_bin_foldername + "gmap_threading.py " + python_path + " " + gmap_path + " -f 1 -t " + str(Nthread) + " " + LR_pathfilename + " " + gmap_index_pathfoldername + " " + temp_foldername + "LR.fa.bestpsl"
           print_run(gmap_cmd)
         else:
-          blat_cmd = python_bin_foldername + "blat_threading.py " + python_path + " " + blat_path + " " + str(Nthread) + " -t=DNA -q=DNA -noHead " + genome_pathfilename + " " + LR_pathfilename + " " + temp_foldername + "LR.fa.psl" #JWDEBUG also did it to this line
+          blat_cmd = python_bin_foldername + "blat_threading.py " + python_path + " " + blat_path + " " + str(Nthread) + " -t=DNA -q=DNA -noHead " + genome_pathfilename + " " + LR_pathfilename + " " + temp_foldername + "LR.fa.bestpsl" #JWDEBUG also did it to this line
           print_run(blat_cmd)
 		
-        change_psl_cmd = python_bin_foldername + "change_psl_4digit.py " + temp_foldername + "LR.fa.psl > " + temp_foldername + "newname4_LR.bestpsl"
+        change_psl_cmd = python_bin_foldername + "change_psl_4digit.py " + temp_foldername + "LR.fa.bestpsl > " + temp_foldername + "newname4_LR.bestpsl"
         print_run(change_psl_cmd)
 
         psl2genephed_cmd = python_bin_foldername + "psl2genephed.py " + temp_foldername + "newname4_LR.bestpsl 0 " + str(L_min_intron) + " " + temp_foldername + "LR.gpd"
@@ -443,15 +461,23 @@ if Istep == 1 or Istep == 0:
 
 #    python2.6 mapEncodeTSStoRegions.py encodeTssHmm.bedRnaElements SR.bed_ref.gpd.exon
     processed_CAGE_filename = "kinfai"
+    """
     if CAGE_data_filename != "":
-        curr_dir = os.getcwd()
-        os.chdir(temp_foldername)
-        experimental_5end_cmd = python_bin_foldername + "mapEncodeTSStoRegions.py " + CAGE_data_filename + " " + "SR.bed_ref.gpd.exon"
+
+        experimental_5end_cmd = python_bin_foldername + "mapEncodeTSStoRegions.py " + CAGE_data_filename + " " + temp_foldername + "SR.bed_ref.gpd.exon " + temp_foldername + "encodeTSS_mapped_regions.txt"
         print_run(experimental_5end_cmd)
-        os.chdir(curr_dir)
+
         print_run(python_bin_foldername + "reformat.py " + temp_foldername + "encodeTSS_mapped_regions.txt > " + temp_foldername + "encodeTSS_mapped_regions.txt_")
         processed_CAGE_filename = temp_foldername + "encodeTSS_mapped_regions.txt_"
-
+    """
+    if CAGE_data_filename != "":
+        
+        experimental_5end_cmd = python_bin_foldername + "mapCageToExons.py " + CAGE_data_filename + " " + temp_foldername + "SR.bed_ref.gpd.exon " + temp_foldername + "ref.gpd " +  I_ref5end_isoformconstruction + " " + temp_foldername + "encodeTSS_mapped_regions.bed"
+        print_run(experimental_5end_cmd)
+        
+        processed_CAGE_filename = temp_foldername + "encodeTSS_mapped_regions.bed"
+    
+    
     ##############################
 
     temp_LR_gpd = open(temp_foldername + "junfil_compatible_LR_polyA3end.gpd",'r')
@@ -632,6 +658,7 @@ if Istep == 2 or Istep == 0:
     maketab_cmd = python_bin_foldername + "MLEout2tab.py " + "refSeq_MLE_output1.txt_ > " + "refSeq_MLE_output1.tab"
     print_run(maketab_cmd)
 
+    print_run("rm SR.sam")
     os.chdir(begin_dir)
 
     ####################################################

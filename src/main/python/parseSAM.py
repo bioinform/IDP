@@ -112,12 +112,14 @@ def parse_read_line(line, READ_LEN):
                     read_len_list.append(seg_len)
                     seg_len = 0
                 read_len +=  int(cigar_list[2 * idx])  
-        read_len_list.append(seg_len)                
+        read_len_list.append(seg_len)
+        if (abs(read_len - READ_LEN) > read_len_margin):
+            read_len_list = []
+            
     else:
         read_len_list = []
         
-    if (abs(read_len - READ_LEN) > read_len_margin):
-        read_len_list = []
+
     return [read_name, read_start_pos, rname, read_len_list]
 ##########
 
