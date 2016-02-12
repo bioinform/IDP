@@ -6,14 +6,18 @@ import os
 if len(sys.argv)>=6:
     in_filename = sys.argv[1]
     idx_filename =sys.argv[2]
-    ACTGTACAGT_filename =sys.argv[3]
-    ACACTCTGT_filename =sys.argv[4]
-    out_filename = sys.argv[5]
-
+    Three_filename =sys.argv[3]
+    Five_filename = sys.argv[4]
+    polyA_min_len = int(sys.argv[5])
+    out_filename = sys.argv[6]
+     
 else:
-    print("usage:./removeAdapterPolyA.py in_filename idx_filename ACTGTACAGT_filename ACACTCTGT_filename out_filename")
-    print("or ./removeAdapterPolyA.py test_LR.fa.cps test_LR.fa.idx test_LR.fa.cps_ACTGTACAGT.out test_LR.fa.cps_ACACTCTGT.out LR_nopolyA.fa")
+    print("usage: removeAdapterPolyA.py in_filename idx_filename Three_filename Five_filename polyA_min_len out_filename")
     sys.exit(1)
+
+################################################################################
+primer_margin = 11
+
 ################################################################################
 
 idx_dt={}
@@ -51,144 +55,154 @@ infile.close()
 
 
 ################################################################################
-ACTGTACAGT_dt={}
-ACTGTACAGT = open(ACTGTACAGT_filename,'r')
-i=0
-for line in ACTGTACAGT:
-    if i==0:
-        i+=1
-        continue
+Five_dt={}
+Five = open(Five_filename,'r')
+# Read the header
+Five.readline()
+for line in Five:
     ls=line.strip().split('\t')
     readname = ls[0]
-    pos = int(ls[1])
+    if not len_dict.has_key(readname):
+        continue
+    pos = int(ls[1]) - 1 #seqmap is 1-based
     strand = ls[-1]
-    L =len( ls[2].replace('_','') )
-    ls[2]=L
+    L = len(ls[2].replace('_','') )
+    ls[2] = L
+    primer_L = len(ls[4])
 
-    if not ACTGTACAGT_dt.has_key(readname):
-        ACTGTACAGT_dt[readname]=[]
+    if not Five_dt.has_key(readname):
+        Five_dt[readname]=[]
 
-    if strand == '+' and pos<=11 :
-        ACTGTACAGT_dt[readname].append(ls)
-    if strand == '-' and pos>=len_dict[readname]-19:
-        ACTGTACAGT_dt[readname].append(ls)
+    if ((strand == '+') and (pos <= primer_margin)):
+        Five_dt[readname].append(ls)
+    if ((strand == '-') and (pos >= (len_dict[readname]- primer_margin - primer_L))):
+        Five_dt[readname].append(ls)
 
-ACTGTACAGT.close()
+Five.close()
 
 ################################################################################
 
-ACACTCTGT_dt={}
-ACACTCTGT= open(ACACTCTGT_filename,'r')
-i=0
-for line in ACACTCTGT:
-    if i==0:
-        i+=1
-        continue
+Three_dt={}
+Three= open(Three_filename,'r')
+# Read the header
+Three.readline()
+
+for line in Three:
     ls=line.strip().split('\t')
     readname = ls[0]
-    pos = int(ls[1])
-    ls[1]=pos
+    if not len_dict.has_key(readname):
+        continue
+    pos = int(ls[1]) - 1  #seqmap is 1-based
     strand = ls[-1]
-    L =len( ls[2].replace('_','') )
-    ls[2]=L
+    L = len( ls[2].replace('_','') )
+    ls[2] = L
+    primer_L = len(ls[4])
 
-    if not ACACTCTGT_dt.has_key(readname):
-        ACACTCTGT_dt[readname]=[]
+    if not Three_dt.has_key(readname):
+        Three_dt[readname]=[]
 
-    if strand == '-' and pos<=16 :
-        polyT_pos = pos+L-2
-        NT = 1
+    if ((strand == '-') and (pos <= primer_margin)) :
+        polyT_pos = pos + L
+        NT = 0
         if idx_dt[readname].has_key(polyT_pos):
             NT = idx_dt[readname][polyT_pos]
-        if cps_dt[readname][polyT_pos] =='T' and NT>=10:
-            ACACTCTGT_dt[readname].append(ls)
+        if ((cps_dt[readname][polyT_pos] == 'T') and 
+            (NT >= polyA_min_len)):
+            Three_dt[readname].append(ls)
 
-    if strand == '+' and pos>=len_dict[readname]-23:
-        NA = 1
-        if idx_dt[readname].has_key(pos-1):
+    if ((strand == '+') and (pos >= (len_dict[readname]- primer_margin - primer_L))):
+        polyA_pos = pos - 1
+        NA = 0
+        if idx_dt[readname].has_key(polyA_pos):
             NA = idx_dt[readname][pos-1]
-        if cps_dt[readname][pos-1] =='A' and NA>=10:
-            ACACTCTGT_dt[readname].append(ls)
+        if ((cps_dt[readname][polyA_pos] =='A') and (NA >= polyA_min_len)):
+            Three_dt[readname].append(ls)
 
-ACACTCTGT.close()
+Three.close()
 
 ################################################################################
 
-def cutmost(temp_ls_ls,FL):
-    s=''
+#Output: strand and 1-based position after/before primer sequence
+def cutmost_five(temp_ls_ls, FL):
+    s = ''
     ref_cut_L = 0
     for temp_ls in temp_ls_ls:
         pos = int(temp_ls[1])
-        if temp_ls[-1]=='+':
-            cut_L = pos-1 + temp_ls[2]
+        if temp_ls[-1]== '+':
+            cut_L = pos + temp_ls[2] - 1
             temp_keep_pt = pos + temp_ls[2]
         else:
-            cut_L = FL - pos +1 
-            temp_keep_pt = pos-1
-        if ref_cut_L<cut_L:
+            cut_L = FL - pos  + 1
+            temp_keep_pt = pos - 1 
+        if ref_cut_L <= cut_L:
             keep_pt = temp_keep_pt
             s = temp_ls[-1]
     return s, keep_pt
-            
-def cutmost2(temp_ls_ls,FL):
-    s=''
+ 
+#Output: strand and selected primer mapping            
+def cutmost_three(temp_ls_ls, FL):
+    s = ''
     ref_cut_L = 0
     result_ls = []
     for temp_ls in temp_ls_ls:
         pos = int(temp_ls[1])
-        if temp_ls[-1]=='+':
-            cut_L = FL - pos +1 
-            temp_keep_pt = pos-1
+        if temp_ls[-1] == '+':
+            cut_L = FL - pos + 1
         else:
-            cut_L = pos-1 + temp_ls[2]
-            temp_keep_pt = pos + temp_ls[2]
-        if ref_cut_L<cut_L:
-            keep_pt = temp_keep_pt
+            cut_L = pos + temp_ls[2] - 1
+  
+        
+        if ref_cut_L <= cut_L:
             s = temp_ls[-1]
             result_ls = temp_ls 
     return s, result_ls
 
-def process(ACACTCTGT_ls_ls,ACTGTACAGT_ls_ls,FL,readname):
-    if len(ACACTCTGT_ls_ls)==0:
+def process(Three_ls_ls, Five_ls_ls, FL, readname):
+    if len(Three_ls_ls) == 0:
         strand = ''
-    elif len(ACACTCTGT_ls_ls)==1:
-        strand = ACACTCTGT_ls_ls[0][-1]
+    
+    elif len(Three_ls_ls) == 1:
+        strand = Three_ls_ls[0][-1]
 
     else:
-        strand, result_ls = cutmost2(ACACTCTGT_ls_ls,FL)
-        ACACTCTGT_ls_ls = [result_ls]
+        strand, result_ls = cutmost_three(Three_ls_ls, FL)
+        Three_ls_ls = [result_ls]  # Update it with the selected entry
         print ">1 polyA/T", readname
 #        return 1,FL
 
+    # No PolyA is detected
     if strand == '':
-        if len(ACTGTACAGT_ls_ls)==0:
+        if len(Five_ls_ls) == 0:
             return 1,FL,strand
-        strand, keep_pt = cutmost(ACTGTACAGT_ls_ls,len_dict[readname])        
+        
+        strand, keep_pt = cutmost_five(Five_ls_ls,len_dict[readname])        
         if strand =='-':
-            return 1,keep_pt,''
+            return 1, keep_pt, ''
         else:
-            return keep_pt,FL,''
+            return keep_pt, FL, ''
+
     else:
-        temp_ls_ls = []
-        for temp_ls in ACTGTACAGT_ls_ls:
-            if temp_ls[-1]==strand:
-                temp_ls_ls.append(temp_ls)
+        temp_five_ls_ls = []
+        for temp_ls in Five_ls_ls:
+            if temp_ls[-1] == strand:
+                temp_five_ls_ls.append(temp_ls)
+
         if strand == '+':
-            right_keep_pt = ACACTCTGT_ls_ls[0][1]-1
-            if len(temp_ls_ls)==0:
-                return 1,right_keep_pt,strand
+            right_keep_pt = int(Three_ls_ls[0][1]) - 2
+            if len(temp_five_ls_ls) == 0:
+                return 1, right_keep_pt, strand
             else:
-                strand, keep_pt = cutmost(temp_ls_ls,FL)
+                strand, keep_pt = cutmost_five(temp_five_ls_ls, FL)
                 return keep_pt,right_keep_pt,strand
         else:
-            left_keep_pt = ACACTCTGT_ls_ls[0][1]+ACACTCTGT_ls_ls[0][2]
-            if len(temp_ls_ls)==0:
-                return left_keep_pt,FL,strand
+            left_keep_pt = int(Three_ls_ls[0][1]) + Three_ls_ls[0][2] + 1
+            if len(temp_five_ls_ls)==0:
+                return left_keep_pt, FL, strand
             else:
-                strand, keep_pt = cutmost(temp_ls_ls,FL)
+                strand, keep_pt = cutmost_five(temp_five_ls_ls, FL)
                 return left_keep_pt,keep_pt,strand
 
-
+################################################################################
 def makelist(seq, temp_idx_dt):
     result_list = list(seq)   
     for item in temp_idx_dt:
@@ -207,11 +221,11 @@ for line in infile:
          outfile.write(line)
          readname=line.strip().strip('>')
     else:
-         if not ACACTCTGT_dt.has_key(readname):
-             ACACTCTGT_dt[readname]=[]
-         if not ACTGTACAGT_dt.has_key(readname):
-             ACTGTACAGT_dt[readname]=[]
-         start,end,strand = process(ACACTCTGT_dt[readname],ACTGTACAGT_dt[readname],len_dict[readname],readname)
+         if not Three_dt.has_key(readname):
+             Three_dt[readname]=[]
+         if not Five_dt.has_key(readname):
+             Five_dt[readname]=[]
+         start, end, strand = process(Three_dt[readname], Five_dt[readname], len_dict[readname], readname)
 
 # strand == "+", end is polyAT
 # strand == "-", start is polyAT
@@ -220,8 +234,8 @@ for line in infile:
              threeend_file.write(readname + "\t" + strand + "\n" )
 
          cps_list = makelist(line.strip(), idx_dt[readname])
-         final_seq = ''.join(cps_list[start-1:end])
-         outfile.write(final_seq+'\n')
+         final_seq = ''.join(cps_list[start - 1: end])
+         outfile.write(final_seq + '\n')
 
 outfile.close()
 infile.close()

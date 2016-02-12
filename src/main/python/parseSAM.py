@@ -117,7 +117,6 @@ def parse_read_line(line, READ_LEN):
             read_len_list = []
     else:
         read_len_list = []
-        
     return [read_name, read_start_pos, rname, read_len_list]
 ##########
 

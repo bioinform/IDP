@@ -91,14 +91,18 @@ for T in T_bestblat_SR_ls:
 cat_bestpsl_cmd = "cat "
 rm_SR_cmd = "rm "
 rm_SRpsl_cmd = "rm "
+rm_SRbestpsl_cmd = "rm "
 for ext in ext_ls:
     cat_bestpsl_cmd = cat_bestpsl_cmd + output_path + SR_filename + ext + ".bestpsl "
     rm_SR_cmd = rm_SR_cmd + output_path + SR_filename + ext + ' '
     rm_SRpsl_cmd = rm_SRpsl_cmd + output_path + SR_filename + ext + '.psl '
+    rm_SRbestpsl_cmd = rm_SRpsl_cmd + output_path + SR_filename + ext + '.bestpsl '
 cat_bestpsl_cmd = cat_bestpsl_cmd + " > " + output_pathfilename    
 print cat_bestpsl_cmd
 print rm_SR_cmd
 print rm_SRpsl_cmd
+print rm_SRbestpsl_cmd
 log_command(cat_bestpsl_cmd)
 log_command(rm_SR_cmd)
 log_command(rm_SRpsl_cmd)
+log_command(rm_SRbestpsl_cmd)
