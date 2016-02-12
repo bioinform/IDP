@@ -255,6 +255,9 @@ for key in cfg_dt:   # Assign variables from configuration file
       if match('[\d]',cfg_dt[key]):
         min_isoform_rpkm = float(cfg_dt[key])
 
+    elif key == "estimator_choice":
+        estimator_choice = cfg_dt[key]
+
 ################################################################################
 # Create folders in the paths supplied in the configuration file
 print_run('mkdir -pv ' + temp_foldername)
