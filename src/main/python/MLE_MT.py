@@ -3,7 +3,7 @@
 import sys
 import os
 import threading
-from binaidp import log_command
+from idpcommon import log_command
 
 def GetPathAndName(pathfilename):
     ls=pathfilename.split('/')
@@ -22,7 +22,7 @@ def main():
     penalty_filename = ''
     if (len(sys.argv) > 5):
         penalty_filename = sys.argv[5]
-    
+
     input_file = open(input_filename, 'r' )
     header = input_file.readline()
     input_files = []
@@ -31,7 +31,6 @@ def main():
         input_files.append(open(input_filename + '.' + str(thread_idx), 'w'))
         input_files[-1].write(header)
 
-        
     thread_idx = 0
     while True:
         line = input_file.readline()
@@ -39,20 +38,20 @@ def main():
             break
         num_isoforms = int(line.split()[1])
         input_files[thread_idx].write(line)
-        
+
         for i in range(6):
             input_files[thread_idx].write(input_file.readline())
         for i in range(num_isoforms):
             input_files[thread_idx].write(input_file.readline())
         for i in range(2):
             input_files[thread_idx].write(input_file.readline())
-    
+
         thread_idx = (thread_idx + 1) % num_threads
-        
+
     for thread_idx in range(num_threads):
         input_files[thread_idx].close()
     input_file.close()
-    
+
     ##############################
     threads_list = []
     for thread_idx in range(num_threads):
@@ -65,18 +64,16 @@ def main():
 
     for thread in threads_list:
         thread.join()
-        
+
     cat_cmnd = 'cat '
     rm_cmnd = "rm "
     for thread_idx in range(num_threads):
         cat_cmnd += output_filename + '.' + str(thread_idx) + " "
         rm_cmnd += output_filename + '.' + str(thread_idx)  + " " + input_filename + '.' + str(thread_idx) + " "
-        
+
     cat_cmnd += ' > ' + output_filename
     log_command(cat_cmnd)
     log_command(rm_cmnd)
-    
-        
 
 if __name__ == '__main__':
     main()

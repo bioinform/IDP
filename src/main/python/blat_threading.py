@@ -4,7 +4,7 @@ import struct
 import os
 import threading
 import string
-from binaidp import log_command
+from idpcommon import log_command
 
 ################################################################################
 
@@ -16,7 +16,7 @@ if len(sys.argv) >= 9: #JWDEBUG modified to handle the extra python argument
     blat_option = ' '.join(sys.argv[4:-2])
     SR_pathfilename = sys.argv[-2]
     output_pathfilename = sys.argv[-1]
-    
+
 else:
     print("usage: python2.6 blat_threading.py p -t=DNA -q=DNA ~/annotations/hg19/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa /usr/bin/python intact_SM.fa intact_SM.fa.psl")
     print("or ./blat_threading.py p -t=DNA -q=DNA ~/annotations/hg19/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa /usr/bin/python intact_SM.fa intact_SM.fa.psl")

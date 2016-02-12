@@ -11,7 +11,8 @@ def Genelist2Set(filename):
     file=open(filename,'r')
     temp_set=set(file)
     for item in temp_set:
-        result.add(item.strip().strip('"').upper())
+        #result.add(item.strip().strip('"').upper())
+        result.add(item.strip().strip('"'))
     file.close()
     return result
 

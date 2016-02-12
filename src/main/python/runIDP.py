@@ -8,8 +8,8 @@ from re import *
 from copy import *
 import threading
 import string
-from binaidp import log_command
-import inspect # JW for debugging
+from idpcommon import log_command
+# import inspect # JW for debugging
 
 ################################################################################
 
@@ -84,11 +84,11 @@ def folder_absolute_right_slash(path):
 # Post: 
 # Modifies:  Standard Out, calls sys.exit()
 ###################################
-def debug_stop(var):
-    print "Debug exit at line " + str(inspect.currentframe().f_back.f_lineno) + "."
-    if var:
-      print "Debug message: " + var
-    sys.exit()
+#def debug_stop(var):
+#    print "Debug exit at line " + str(inspect.currentframe().f_back.f_lineno) + "."
+#    if var:
+#      print "Debug message: " + var
+#    sys.exit()
 
 ######### debug_report ##########
 # Print a message stating the execution of a line
@@ -97,10 +97,10 @@ def debug_stop(var):
 # Post: 
 # Modifies:  Standard Out
 ###################################
-def debug_report(var):
-    print "Debug passing line " + str(inspect.currentframe().f_back.f_lineno) + "."
-    if var:
-      print "Debug message: " + var
+#def debug_report(var):
+#    print "Debug passing line " + str(inspect.currentframe().f_back.f_lineno) + "."
+#    if var:
+#      print "Debug message: " + var
 
 
 
@@ -148,6 +148,10 @@ I_ref5end_isoformconstruction = "1"
 I_ref3end_isoformconstruction = "1"
 
 detect_polyA = 0
+FPR = 1
+min_isoform_fraction = 0
+min_isoform_rpkm = 0
+
 three_primer = ""
 five_primer = ""
 polyA_min_len = "10"
@@ -248,9 +252,16 @@ for key in cfg_dt:   # Assign variables from configuration file
         polyA_min_len = cfg_dt[key]
 
     elif key == "FPR":
-        FPR = cfg_dt[key]
+      if match('[\d]',cfg_dt[key]):
+        FPR = float(cfg_dt[key])
     elif key == "estimator_choice":
         estimator_choice = cfg_dt[key]
+    elif key == "min_isoform_fraction":
+      if match('[\d]',cfg_dt[key]):
+        min_isoform_fraction = float(cfg_dt[key])
+    elif key == "min_isoform_rpkm":
+      if match('[\d]',cfg_dt[key]):
+        min_isoform_rpkm = float(cfg_dt[key])
 
 ################################################################################
 # Create folders in the paths supplied in the configuration file
@@ -300,7 +311,7 @@ elif LR_psl_pathfilename != "":
 	
 elif LR_pathfilename != "" and genome_pathfilename != "":
     print "use raw sequence of the long reads (FASTA format), " + LR_pathfilename + " as long read input; and the reference genome is " + genome_pathfilename
-    #This sectino will make a large number of files in the temp folder (~156)
+    #This section will make a large number of files in the temp folder (~156)
     I_LR_step = 2
 
     # For backward compatibility 
@@ -379,56 +390,60 @@ print_run("cp " + ref_gpd_pathfilename + " " + temp_foldername + "ref.gpd")
 
 ## detected_exp_len ##
 I_sam_exist = 0
-if detected_exp_len_pathfilename == "" and estimator_choice != 'MLE':  # if estimator is MLE we definately skip this part.
-    print "Warning: There is no " + detected_exp_len_pathfilename + "data." 
-    print "Here, we calculate detection rate from long reads data and short read alignment" + SR_sam_pathfilename
+if estimator_choice != 'MLE':
+	try:
+	    detected_exp_len_pathfilename
+	except NameError:
+	    print "Warning: There is no " + detected_exp_len + "data." 
+	    print "Here, we calculate detection rate from long reads data and short read alignment" + SR_sam_pathfilename
+	
+	    os.chdir(temp_foldername)
+	
+	    ## abundance estimation of annotated transcripts ##
+	
+	    parseRef_cmd = python_bin_foldername + "parseRef.py " + "ref.gpd " + str(read_length) + " " + str(min_junction_overlap_len)
+	    print_run(parseRef_cmd)
+	
+	    if SR_sam_pathfilename.endswith('.bam'):
+	        print_run("samtools view -h -o SR.sam " + SR_sam_pathfilename)
+	    else:
+	        print_run("cp " + SR_sam_pathfilename + " SR.sam")
+	    I_sam_exist = 1
+	
+	    parseSAM_cmd = python_bin_foldername + "parseSAM_MT.py " + "ref_regions.gpd " + "SR.sam " + str(Nthread) + " " + python_path + " "   + str(read_length) + " " + str(min_junction_overlap_len) + " > parseSAM_MT0.log" 
+	    print_run(parseSAM_cmd)
+	    print_run("awk \'{print $3\"\\t\"$2}\' " + "ref.gpd > " + "positive_candidate_list0")
+	
+	    print_run("mv refSeq_MLE_input.txt refSeq_MLE_input0.txt")
+	
+	    markknownTranscripts_cmd = python_bin_foldername + "markKnownTranscripts.py " + "refSeq_MLE_input0.txt " + "positive_candidate_list0 " + "refSeq_MLE_input_marked0.txt" 
+	    print_run(markknownTranscripts_cmd)
+	
+	    MLE_cmd = python_bin_foldername + "MLE_MT.py " + "refSeq_MLE_input_marked0.txt " + "refSeq_MLE_output0.txt " + str(Nthread) + " " + python_path
+	    print_run(MLE_cmd)
+	
+	    os.chdir(begin_dir)
+	
+	    ####################################################
+	
+	
+	    novel_genephed_cmd = python_bin_foldername + "novel_genephed.py " + temp_foldername + "ref.gpd" + " " + temp_foldername + "LR.gpd " + temp_foldername + "novel_LR.gpd > " + temp_foldername + "known_LR.gpd"
+	    print_run(novel_genephed_cmd)
+	   
+	    ## abundance estimation of annotated transcripts ##
+	
+	    reformat_cmd = python_bin_foldername + "reformat.py " + temp_foldername + "refSeq_MLE_output0.txt > " + temp_foldername + "refSeq_MLE_output0.txt_"
+	    print_run(reformat_cmd)
+	
+	    maketab_cmd = python_bin_foldername + "MLEout2tab.py " + temp_foldername + "refSeq_MLE_output0.txt_ > " + temp_foldername + "refSeq_MLE_output0.tab"
+	    print_run(maketab_cmd)
+	
+	    exp_len_I_cmd = python_bin_foldername + "exp_len.py " + temp_foldername + "refSeq_MLE_output0.tab " + temp_foldername + "known_LR.gpd_ref.gpd > " + temp_foldername + "known_LR.gpd_ref.gpd_exp_len"
+	    print_run(exp_len_I_cmd)
+	
+	else:
+	    print_run("cp " + detected_exp_len_pathfilename + " " + temp_foldername + "known_LR.gpd_ref.gpd_exp_len")
 
-    os.chdir(temp_foldername)
-    
-    ## abundance estimation of annotated transcripts ##
-
-    parseRef_cmd = python_bin_foldername + "parseRef.py " + "ref.gpd " + str(read_length) + " " + str(min_junction_overlap_len)
-    print_run(parseRef_cmd)
-
-    if SR_sam_pathfilename.endswith('.bam'):
-        print_run("samtools view -h -o SR.sam " + SR_sam_pathfilename)
-    else:
-        print_run("cp " + SR_sam_pathfilename + " SR.sam")
-    I_sam_exist = 1
-
-    parseSAM_cmd = python_bin_foldername + "parseSAM_MT.py " + "ref_regions.gpd " + "SR.sam " + str(Nthread) + " " + python_path + " "   + str(read_length) + " " + str(min_junction_overlap_len) + " > parseSAM_MT0.log" 
-    print_run(parseSAM_cmd)
-    print_run("awk \'{print $3\"\\t\"$2}\' " + "ref.gpd > " + "positive_candidate_list0")
-
-    print_run("mv refSeq_MLE_input.txt refSeq_MLE_input0.txt")
-
-    markknownTranscripts_cmd = python_bin_foldername + "markKnownTranscripts.py " + "refSeq_MLE_input0.txt " + "positive_candidate_list0 " + "refSeq_MLE_input_marked0.txt" 
-    print_run(markknownTranscripts_cmd)
-
-    MLE_cmd = python_bin_foldername + "MLE_MT.py " + "refSeq_MLE_input_marked0.txt " + "refSeq_MLE_output0.txt " + str(Nthread) + " " + python_path
-    print_run(MLE_cmd)
-
-    os.chdir(begin_dir)
-
-    ####################################################
-
-
-    novel_genephed_cmd = python_bin_foldername + "novel_genephed.py " + temp_foldername + "ref.gpd" + " " + temp_foldername + "LR.gpd " + temp_foldername + "novel_LR.gpd > " + temp_foldername + "known_LR.gpd"
-    print_run(novel_genephed_cmd)
-   
-    ## abundance estimation of annotated transcripts ##
-
-    reformat_cmd = python_bin_foldername + "reformat.py " + temp_foldername + "refSeq_MLE_output0.txt > " + temp_foldername + "refSeq_MLE_output0.txt_"
-    print_run(reformat_cmd)
-
-    maketab_cmd = python_bin_foldername + "MLEout2tab.py " + temp_foldername + "refSeq_MLE_output0.txt_ > " + temp_foldername + "refSeq_MLE_output0.tab"
-    print_run(maketab_cmd)
-
-    exp_len_I_cmd = python_bin_foldername + "exp_len.py " + temp_foldername + "refSeq_MLE_output0.tab " + temp_foldername + "known_LR.gpd_ref.gpd > " + temp_foldername + "known_LR.gpd_ref.gpd_exp_len"
-    print_run(exp_len_I_cmd)
-
-elif estimator_choice != 'MLE': # we won't need this file if we are using MLE as estimator choice
-    print_run("cp " + detected_exp_len_pathfilename + " " + temp_foldername + "known_LR.gpd_ref.gpd_exp_len")
 #############################################################################################################################################################
 
 if Istep == 1 or Istep == 0:
@@ -605,8 +620,21 @@ if Istep == 2 or Istep == 0:
     addexp2bed_cmd = python_bin_foldername + "addexp2bed.py " + "refSeq_MLE_output.txt_ " + "isoform_construction.gpd isoform_construction_expcol.bed B > noexp_gene_transcript_list"
     print_run(addexp2bed_cmd)
 
-    select_ROC_cmd = python_bin_foldername + "select_FPR.py positive_refSeq_MLE_output.tab negative_refSeq_MLE_output.tab " + str(FPR) + " refSeq_MLE_output.tab refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".tab"
-    print_run(select_ROC_cmd)
+
+    # Use the ratios of isoform to gene locus expression from the negative 
+    #     data to filter data according to the user defined FPR.
+    FPR_option_string = ""
+    min_isoform_fraction_string = ""
+    min_isoform_rpkm_string = ""
+    if FPR > 0 and FPR < 1:
+      FPR_option_string = " --FPR "+str(FPR)+" "
+    elif min_isoform_fraction > 0:
+      min_isoform_fraction_string = " --min_isoform_fraction "+str(min_isoform_fraction)+" "
+    if min_isoform_rpkm > 0:
+      min_isoform_rpkm_string = " --min_isoform_rpkm "+str(min_isoform_rpkm)+" "
+    filter_MLE_cmd = python_bin_foldername + "filter_MLE_table.py" + FPR_option_string + min_isoform_fraction_string+min_isoform_rpkm_string+"negative_refSeq_MLE_output.tab refSeq_MLE_output.tab refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".tab"
+    print_run(filter_MLE_cmd)
+
     print_run("cut -f 1 refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".tab > refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".ID")
     print_run(python_bin_foldername + "selectrow.py " + "isoform_construction." + "Niso" + Niso + ".gpd" +  " 2 " + "refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".ID " + "refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".gpd > " + "isoform_construction." + "Niso" + Niso + ".gpd_selectcount")
 
