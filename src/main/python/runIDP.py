@@ -159,7 +159,6 @@ exon_construction_junction_span = "1"
 Niso = "50"
 Npt = "500"
 Nbin = "5"
-FPR = "0.05"
 
 read_length = 100
 L_min_intron = 68
