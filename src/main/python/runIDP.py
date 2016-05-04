@@ -394,7 +394,7 @@ print_run("cp " + ref_gpd_pathfilename + " " + temp_foldername + "ref.gpd")
 I_sam_exist = 0
 if estimator_choice != 'MLE':
 	try:
-        print_run("cp " + detected_exp_len_pathfilename + " " + temp_foldername + "known_LR.gpd_ref.gpd_exp_len")
+	    print_run("cp " + detected_exp_len_pathfilename + " " + temp_foldername + "known_LR.gpd_ref.gpd_exp_len")
 	except NameError:
 	    print "Warning: There is no " + detected_exp_len + "data." 
 	    print "Here, we calculate detection rate from long reads data and short read alignment" + SR_sam_pathfilename
@@ -442,7 +442,6 @@ if estimator_choice != 'MLE':
 	
 	    exp_len_I_cmd = python_bin_foldername + "exp_len.py " + temp_foldername + "refSeq_MLE_output0.tab " + temp_foldername + "known_LR.gpd_ref.gpd > " + temp_foldername + "known_LR.gpd_ref.gpd_exp_len"
 	    print_run(exp_len_I_cmd)
-	
 
 #############################################################################################################################################################
 
