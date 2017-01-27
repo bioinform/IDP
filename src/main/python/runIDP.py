@@ -393,10 +393,10 @@ print_run("cp " + ref_gpd_pathfilename + " " + temp_foldername + "ref.gpd")
 ## detected_exp_len ##
 I_sam_exist = 0
 if estimator_choice != 'MLE':
-	try:
+	if detected_exp_len_pathfilename != "":
 	    print_run("cp " + detected_exp_len_pathfilename + " " + temp_foldername + "known_LR.gpd_ref.gpd_exp_len")
-	except NameError:
-	    print "Warning: There is no " + detected_exp_len + "data." 
+	else:
+	    print "Warning: There is no " + detected_exp_len_pathfilename + "data." 
 	    print "Here, we calculate detection rate from long reads data and short read alignment" + SR_sam_pathfilename
 	
 	    os.chdir(temp_foldername)
@@ -631,7 +631,7 @@ if Istep == 2 or Istep == 0:
       min_isoform_fraction_string = " --min_isoform_fraction "+str(min_isoform_fraction)+" "
     if min_isoform_rpkm > 0:
       min_isoform_rpkm_string = " --min_isoform_rpkm "+str(min_isoform_rpkm)+" "
-    filter_MLE_cmd = python_bin_foldername + "filter_MLE_table.py" + FPR_option_string + min_isoform_fraction_string+min_isoform_rpkm_string+"negative_refSeq_MLE_output.tab refSeq_MLE_output.tab refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".tab"
+    filter_MLE_cmd = python_bin_foldername + "filter_MLE_table.py " + FPR_option_string + min_isoform_fraction_string+min_isoform_rpkm_string+"negative_refSeq_MLE_output.tab refSeq_MLE_output.tab refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".tab"
     print_run(filter_MLE_cmd)
 
     print_run("cut -f 1 refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".tab > refSeq_MLE_output_FPR" +  str(FPR).replace(".","") + ".ID")
