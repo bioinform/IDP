@@ -50,7 +50,7 @@ def check_3end(readname):
 #gene_name	n
 #a1-b1	a2-b2	a3-b3
 #n1	n2	n3
-
+"""
 def parse_5cap_file(CAGE_filename):
     if CAGE_filename == "kinfai":
         return {}
@@ -83,6 +83,25 @@ def parse_5cap_file(CAGE_filename):
             i +=1
     CAGE_file.close()
     return result
+"""
+def parse_5cap_file(CAGE_filename):
+    if CAGE_filename == "kinfai":
+        return {}
+    result = {}
+    CAGE_file = open(CAGE_filename,'r')
+    for line in CAGE_file:
+        ls = line.strip().split('\t')
+        gene_name = ls[-1]
+        chr_name = ls[0]
+        start = int(ls[1])
+        end = int(ls[2])
+        if not result.has_key(gene_name):
+            result[gene_name] = {}
+        Npeak = 1
+        result[gene_name][start]=[end, Npeak]
+
+    CAGE_file.close()
+    return result
 
 def define_5end(cap_dt,Nthreshold):
     fwd_5end_dt = {}
@@ -93,6 +112,7 @@ def define_5end(cap_dt,Nthreshold):
         for start in cap_dt[gene_name]:
             if cap_dt[gene_name][start][1] < Nthreshold:
                 continue
+            #print str(gene_name) + "\t" + str(fwd_5end_dt[gene_name])
             fwd_5end_dt[gene_name].append(start)
             rev_5end_dt[gene_name].append(cap_dt[gene_name][start][0])
     return fwd_5end_dt,rev_5end_dt
@@ -115,16 +135,18 @@ for line in jun_file:
     leftpos=int(ls[1])+int(thickness[0])
     rightpos=int(ls[2])-int(thickness[1])
 
-    name = ls[3]  
-    num_indep=int(name.split('_')[1].split(']')[0])
-    num_uniq=int(name.split('](')[1].split('/')[0])
+    name = ls[3]
+    if ('[' in name):
+        num_indep=int(name.split('_')[-1].split(']')[0])
+        num_uniq=int(name.split('](')[1].split('/')[0])
+
+        if num_indep < 2 or num_uniq == 0:
+            continue
 
     locus = chr_name + ':' + str(leftpos) + '-' +str(rightpos)
     if not jun_strand_dt.has_key(locus):
         jun_strand_dt[locus] = strand
 
-    if num_indep < 2 or num_uniq == 0:
-        continue
 
     if not jun_start_dt.has_key(chr_name):
         jun_start_dt[chr_name] = {}
@@ -405,8 +427,9 @@ for gene_name in threeend_nonredpt_dt:
 
 cap_dt = parse_5cap_file(CAGE_filename)
 fwd_5end_dt,rev_5end_dt = define_5end(cap_dt,1)
-print "yue", cap_dt
-print "kinfai",  fwd_5end_dt,rev_5end_dt
+#print "yue", cap_dt
+#print "kinfai",  fwd_5end_dt,rev_5end_dt
+
 for chr_name in gene_region_dt:
     if not ref_fiveend_dt.has_key(chr_name):
         continue

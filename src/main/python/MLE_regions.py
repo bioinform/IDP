@@ -259,30 +259,27 @@ def main():
             str_print += (isoform_names[i].ljust(len_ljust))
         output_file.write(str_print + ('Total').ljust(20) + '\n')
     
-        if any(X_opt < 0):    
-            N = sum(N)
-            L = sum(L)
-            #[X_opt] = [N / ((L) * 1e-3) / (NN * 1e-6)]
-            X_opt = N / (L) / NN * 1e9
-            if (num_isoforms == 1):
-                X_opt_list = [[X_opt]]
-            else:
-                X_opt_list = ['NA'] * num_isoforms
-            total_exp_level = X_opt
+        if any(X_opt < 0):  
+            X_opt = 0
+            total_exp_level_print = 'NA'
+            X_opt_list_print = ['NA'] * num_isoforms
+            if (len(L) > 0):
+                #[X_opt] = [N / ((L) * 1e-3) / (NN * 1e-6)]
+                X_opt = sum(N) / sum(L) / (NN * 1e-9)
+                total_exp_level_print = str(round(X_opt, 4))
+                if (num_isoforms == 1):
+                    X_opt_list_print = [str(round(X_opt, 4))]
             #print 'Total Expression: ' + str(X_opt)
         else:
             #print('MLE computation: num_regions=%d, num_isoforms=%d, num_mapped_reads=%d' % (len(L), num_isoforms, int(sum(N))))
-            X_opt_list = X_opt.tolist() 
-            total_exp_level = sum(X_opt_list)
+            X_opt_list_print = [str(round(exp[0], 4)) for exp in X_opt.tolist()]
+            total_exp_level_print = str(round(sum(X_opt.tolist()), 4))
         str_print = ""
 
         for i in range(num_isoforms):
             len_ljust = max((len(isoform_names[i])/10 + 1) * 10, 20)
-            if (X_opt_list[i] == 'NA'):
-                str_print += (str(X_opt_list[i]).ljust(len_ljust))
-            else:
-                str_print += (str(round(X_opt_list[i][0], 4)).ljust(len_ljust))
-        output_file.write(str_print + str(round(total_exp_level, 4)).ljust(20))
+            str_print += (X_opt_list_print[i]).ljust(len_ljust)
+        output_file.write(str_print + total_exp_level_print.ljust(20))
         output_file.write('\n')
     
     input_file.close()

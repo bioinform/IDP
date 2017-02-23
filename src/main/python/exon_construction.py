@@ -125,14 +125,14 @@ for line in jun_file:
     leftpos=int(ls[1])+int(thickness[0])
     rightpos=int(ls[2])-int(thickness[1])
 
-    name = ls[3]  
-    num_indep=int(name.split('_')[1].split(']')[0])
-    num_uniq=int(name.split('](')[1].split('/')[0])
+    name = ls[3]
+    if ('[' in name):
+        num_indep=int(name.split('[')[1].split(']')[0].split('_')[1])
+        num_uniq=int(name.split('](')[1].split('/')[0])
+        #print leftpos, rightpos, num_indep, num_uniq
 
-#    print leftpos, rightpos, num_indep, num_uniq
-
-    if not (num_indep > 1 and num_uniq > 0):
-        continue
+        if not (num_indep > 1 and num_uniq > 0):
+            continue
 
     locus = chr_name + ":" + str(leftpos) + "-" + str(rightpos)
     if not ref_jun_dt.has_key(locus):

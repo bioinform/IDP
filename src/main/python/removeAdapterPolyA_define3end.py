@@ -60,6 +60,8 @@ for line in ACTGTACAGT:
         continue
     ls=line.strip().split('\t')
     readname = ls[0]
+    if not len_dict.has_key(readname):
+        continue
     pos = int(ls[1])
     strand = ls[-1]
     L =len( ls[2].replace('_','') )
@@ -86,6 +88,8 @@ for line in ACACTCTGT:
         continue
     ls=line.strip().split('\t')
     readname = ls[0]
+    if not len_dict.has_key(readname):
+        continue
     pos = int(ls[1])
     ls[1]=pos
     strand = ls[-1]
@@ -107,8 +111,9 @@ for line in ACACTCTGT:
         NA = 1
         if idx_dt[readname].has_key(pos-1):
             NA = idx_dt[readname][pos-1]
-        if cps_dt[readname][pos-1] =='A' and NA>=10:
-            ACACTCTGT_dt[readname].append(ls)
+        if ((pos-1) < len(cps_dt[readname])):
+            if cps_dt[readname][pos-1] =='A' and NA>=10:
+                ACACTCTGT_dt[readname].append(ls)
 
 ACACTCTGT.close()
 

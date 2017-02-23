@@ -113,10 +113,9 @@ def parse_read_line(line, READ_LEN):
                     seg_len = 0
                 read_len +=  int(cigar_list[2 * idx])  
         read_len_list.append(seg_len)                
+        if (abs(read_len - READ_LEN) > read_len_margin):
+            read_len_list = []
     else:
-        read_len_list = []
-        
-    if (abs(read_len - READ_LEN) > read_len_margin):
         read_len_list = []
     return [read_name, read_start_pos, rname, read_len_list]
 ##########
@@ -379,6 +378,7 @@ def main():
     end_time = datetime.now()
     print 'Parsing reads started at ' + str(start_time)
     print 'Parsing reads ended at   ' + str(end_time)
+    print 'Number of map_read reads: (%d/%d = %0.2f)'%(num_reads,line_num,100*num_reads/float(line_num+0.00001))
     
     print 'Generating output file.'
     

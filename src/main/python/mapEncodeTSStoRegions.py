@@ -189,8 +189,7 @@ def main():
     # Read input parameters
     tss_file_str = sys.argv[1]
     region_file_str = sys.argv[2]
-    
-    output_file_str = 'encodeTSS_mapped_regions.txt'
+    output_file_str = sys.argv[3]
     
     tss_file = open(tss_file_str, 'r')
     [tss_dict] = parse_tss_file(tss_file)
